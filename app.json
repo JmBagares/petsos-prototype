@@ -8,7 +8,6 @@
     "scheme": "petsosprototype",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
@@ -16,26 +15,19 @@
         "NSLocationWhenInUseUsageDescription": "PetSOS uses your location to geotag incident reports."
       }
     },
-
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "permissions": [
-        "CAMERA",
-        "ACCESS_COARSE_LOCATION",
-        "ACCESS_FINE_LOCATION"
-      ]
+      "permissions": ["CAMERA", "ACCESS_COARSE_LOCATION", "ACCESS_FINE_LOCATION"]
     },
-
     "web": {
       "bundler": "metro",
       "output": "static",
       "favicon": "./assets/images/favicon.png"
     },
-
     "plugins": [
       "expo-router",
       [
@@ -55,9 +47,12 @@
         }
       ]
     ],
-
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "EXPO_PUBLIC_SUPABASE_URL": "https://owbckdmrnqexlpnfgjqu.supabase.co",
+      "EXPO_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im93YmNrZG1ybnFleGxwbmZnanF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY5ODI1MjYsImV4cCI6MjA3MjU1ODUyNn0.81DmIEPX5YHqdyzZBDoDe715DNCjXp9J7yPRJHtzKa8"
     }
   }
 }

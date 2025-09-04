@@ -8,6 +8,24 @@ import {
   StyleSheet,
 } from "react-native";
 import { useReports } from "../context/ReportsContext";
+import { useEffect } from "react";
+import { supabase } from "../lib/supabase";
+
+useEffect(() => {
+  (async () => {
+    const { data, error } = await supabase
+      .from("reports")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(50);
+
+    if (!error && data) {
+      // hydrate local store (avoid duplicates if you already have items)
+      // You can extend the context with a setReports() method,
+      // or just map them to the existing addReport pattern if you wish.
+    }
+  })();
+}, []);
 
 export default function Community() {
   const { reports } = useReports();

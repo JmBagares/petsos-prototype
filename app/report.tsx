@@ -1,19 +1,20 @@
 // app/report.tsx
-import { useEffect, useRef, useState } from "react";
-import {
-  SafeAreaView,
-  View,
-  Text,
-  TouchableOpacity,
-  Image,
-  TextInput,
-  StyleSheet,
-  Alert,
-} from "react-native";
-import { useRouter } from "expo-router";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import * as Location from "expo-location";
+import { useRouter } from "expo-router";
+import { useEffect, useRef, useState } from "react";
+import {
+  Alert,
+  Image,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { useReports } from "../context/ReportsContext";
+import { supabase } from "../lib/supabase";
 
 export default function Report() {
   const router = useRouter();
@@ -102,20 +103,93 @@ export default function Report() {
     setAddress(null); // <-- ADD THIS
   };
 
-  const submit = () => {
+  // REPLACE your existing submit() with this:
+  const submit = async () => {
     if (!photoUri) {
       Alert.alert("Missing photo", "Please take a picture first.");
       return;
     }
-    addReport({
-      id: `${Date.now()}`,
-      photoUri,
-      description: description.trim(),
-      timestamp: timestamp ?? new Date().toISOString(),
-      coords,
-      address,
-    });
-    router.replace("/community");
+
+    try {
+      // 1) Read local file as bytes (RN-friendly)
+      const res = await fetch(photoUri);
+      const arrayBuffer = await res.arrayBuffer();
+      const fileBytes = new Uint8Array(arrayBuffer);
+
+      // 2) Upload to Supabase Storage
+      const filename = `${Date.now()}-${Math.floor(Math.random() * 1e6)}.jpg`;
+      const path = `images/${filename}`;
+      console.log(
+        "Uploading to bucket: reports, path:",
+        path,
+        "bytes:",
+        fileBytes.length
+      );
+
+      const { error: uploadErr } = await supabase.storage
+        .from("reports")
+        .upload(path, fileBytes, {
+          contentType: "image/jpeg",
+          upsert: false,
+        });
+
+      if (uploadErr) {
+        console.log("Upload error:", uploadErr);
+        throw uploadErr;
+      }
+
+      // 3) Public URL
+      const { data: pub } = supabase.storage.from("reports").getPublicUrl(path);
+      const photo_url = pub.publicUrl;
+
+      const { data, error } = await supabase
+        .from("reports")
+        .insert({
+          photo_url: "https://example.com/placeholder.jpg",
+          description: "sanity check",
+          address,
+          lat: coords?.lat,
+          lng: coords?.lng,
+        })
+        .select("*");
+      console.log("db insert:", data, error);
+      // 4) Insert DB row (and return it so we can see success in logs)
+      const lat = coords?.lat ?? null;
+      const lng = coords?.lng ?? null;
+
+      const { data: inserted, error: insertErr } = await supabase
+        .from("reports")
+        .insert({
+          photo_url,
+          description: description.trim(),
+          address,
+          lat,
+          lng,
+        })
+        .select("*");
+
+      if (insertErr) {
+        console.log("Insert error:", insertErr);
+        throw insertErr;
+      }
+      console.log("Inserted rows:", inserted);
+
+      // 5) Update local UI immediately
+      addReport({
+        id: `${Date.now()}`,
+        photoUri, // local preview
+        photo_url, // remote URL for future loads
+        description: description.trim(),
+        timestamp: timestamp ?? new Date().toISOString(),
+        coords,
+        address,
+      });
+
+      router.replace("/community");
+    } catch (e: any) {
+      console.warn("Submit failed:", e);
+      Alert.alert("Upload failed", e?.message ?? "Please try again.");
+    }
   };
 
   if (!camPerm) {

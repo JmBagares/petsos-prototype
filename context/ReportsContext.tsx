@@ -2,12 +2,13 @@
 import React, { createContext, useContext, useMemo, useState } from "react";
 
 type Report = {
-  id: string;
-  photoUri: string;
+  id: string;              // local temp id ok
+  photoUri: string;        // local file (for preview)
+  photo_url?: string;      // public URL from Storage
   description: string;
   timestamp: string;
   coords: { lat: number; lng: number } | null;
-  address: string | null; // <-- ADD THIS
+  address: string | null;
 };
 
 type ReportsContextType = {
